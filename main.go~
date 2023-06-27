@@ -1,0 +1,471 @@
+package main
+
+import (
+	"fmt"
+	"image/color"
+	"time"
+	"math/rand"
+	"log"
+	"io/ioutil"
+	"strconv"
+	//"golang.org/x/image/font"
+
+	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/text"
+	"github.com/golang/freetype/truetype"
+	"github.com/hajimehoshi/ebiten/audio"
+	"github.com/hajimehoshi/ebiten/audio/wav"
+	"golang.org/x/image/font"
+)
+
+const (
+	BLOCKSIZE = 45
+	WIDTH = BLOCKSIZE * 20
+	HEIGHT = BLOCKSIZE * 20
+	SECOND = 1000000000
+	WAIT_X = 15
+	WAIT_Y = 8
+	FONT_PATH = "assets/fonts/font.ttf"
+	FONT_SIZE = 50
+	START_SPEED = 4
+)
+
+var LightGray = color.RGBA{211, 211, 211, 255}
+var DarkGray = color.RGBA{169, 169, 169, 255}
+var Red = color.RGBA{255, 0, 0, 255}
+var LightBlue = color.RGBA{135, 206, 235, 255}
+var Blue = color.RGBA{0, 0, 255, 255}
+var Yellow = color.RGBA{255, 255, 0, 255}
+var Cyan = color.RGBA{0, 255, 255, 255}
+var Orange = color.RGBA{255, 165, 0, 255}
+var Green = color.RGBA{50, 205, 50, 255}
+var Black = color.RGBA{0, 0, 0, 255}
+var regularFont font.Face
+
+func init() {
+	tt, err := ebitenutil.OpenFile(FONT_PATH)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fontBytes, err := ioutil.ReadAll(tt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ttfont, err := truetype.Parse(fontBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	regularFont = truetype.NewFace(ttfont, &truetype.Options{
+		Size:    FONT_SIZE,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+}
+
+
+
+type Tetramino struct {
+	shape [4][2]int
+	x int
+	y int
+	color color.RGBA
+}
+
+func (t *Tetramino) Draw(screen *ebiten.Image) {
+	for i := 0; i < 4; i++ {
+		ebitenutil.DrawRect(screen,
+			float64(t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE),
+			float64(t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE),
+			BLOCKSIZE,
+			BLOCKSIZE,
+			Black,
+		)
+		ebitenutil.DrawRect(screen,
+			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE)-2),
+			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE))-2,
+			BLOCKSIZE-4,
+			BLOCKSIZE-4,
+			t.color,
+		)
+	}
+}
+
+func (t *Tetramino) Move(dx int, dy int) {
+	t.x += dx
+	t.y += dy
+}
+
+func (t *Tetramino) Rotate() {
+	for i := 1; i < 4; i++ {
+		new_x := t.shape[i][1] * -1
+		new_y := t.shape[i][0]
+		t.shape[i][0] = new_x
+		t.shape[i][1] = new_y
+	}
+
+	out_of_bounds := 0
+	for i := 0; i < 4; i++ {
+		if t.x + t.shape[i][0] > 9 && t.x + t.shape[i][0] > out_of_bounds {
+			out_of_bounds = (t.x + t.shape[i][0]) - 9
+		} else if t.x + t.shape[i][0] < 0 && t.x + t.shape[i][0] < out_of_bounds {
+			out_of_bounds = (0 - (t.x + t.shape[i][0])) * -1
+		}
+	}
+
+	fmt.Println(out_of_bounds)
+	if out_of_bounds != 0 {
+		t.x -= out_of_bounds
+	}
+}
+
+func (t *Tetramino) CanRotate(board [20][10]Box) bool {
+	for i := 1; i < 4; i++ {
+		new_x := t.shape[i][1] * -1
+		new_y := t.shape[i][0]
+		if board[t.y + new_y][t.x + new_x].exists {
+			return false
+		}
+	}
+	return true
+}
+
+func (t *Tetramino) CanMove(board [20][10]Box, delta_pos [2]int) bool {
+	for i := 0; i < 4; i++ {
+		if t.x + t.shape[i][0] + delta_pos[0] > 9 {
+			return false
+		} else if t.x + t.shape[i][0] + delta_pos[0] < 0 {
+			return false
+		} else if board[t.y + t.shape[i][1]][t.x + t.shape[i][0] + delta_pos[0]].exists {
+			return false
+		}
+		
+	}
+	return true
+}
+
+func (t *Tetramino) ShouldFreeze(board [20][10]Box) bool {
+	for i := 0; i < 4; i++ {
+		if t.y + t.shape[i][1] >= 19 {
+			return true
+		} else if board[t.y + t.shape[i][1] + 1][t.x + t.shape[i][0]].exists {
+			return true
+		}
+	}
+	return false
+}
+
+func createTetramino() Tetramino {
+	switch rand.Intn(7) + 1 {
+	case 1:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{-1, 0}, {1,0}, {2,0}},
+			color: LightBlue,
+			x: WAIT_X-1,
+			y: WAIT_Y,
+		}
+	case 2:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{0, 1}, {1,0}, {1,1}},
+			color: Yellow,
+			x: WAIT_X,
+			y: WAIT_Y,
+		}
+	case 3:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{-1, 0}, {1,0}, {0,1}},
+			color: Cyan,
+			x: WAIT_X,
+			y: WAIT_Y,
+		}
+	case 4:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{0, -1}, {0,1}, {1,1}},
+			color: Orange,
+			x: WAIT_X,
+			y: WAIT_Y,
+		}
+	case 5:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{-1, 0}, {0,1}, {1,1}},
+			color: Green,
+			x: WAIT_X,
+			y: WAIT_Y,
+		}
+	case 6:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{0, 1}, {0,-1}, {-1,-1}},
+			color: Blue,
+			x: WAIT_X,
+			y: WAIT_Y,
+		}
+	case 7:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{-1, 0}, {0,-1}, {1,-1}},
+			color: Red,
+			x: WAIT_X,
+			y: WAIT_Y,
+		}
+	default:
+		return Tetramino{
+			shape: [4][2]int{{0,0},{-1, 0}, {0,-1}, {1,-1}},
+			color: Blue,
+			x: WAIT_X,
+			y: WAIT_Y,
+		}
+	}
+}
+
+
+
+
+
+type Box struct {
+	exists bool
+	color color.RGBA
+}
+
+
+type Game struct {
+	delta_time time.Time
+	current_tetramino Tetramino
+	next_tetramino Tetramino
+	board [20][10]Box
+	points int
+	game_over bool
+	background *ebiten.Image
+	mainPlayer *audio.Player
+	effectPlayer *audio.Player
+}
+
+func (g *Game) NewTetramino() {
+	for i := 0; i < 4; i++ {
+		x := g.current_tetramino.x + g.current_tetramino.shape[i][0]
+		y := g.current_tetramino.y + g.current_tetramino.shape[i][1]
+		g.board[y][x].exists = true
+		g.board[y][x].color = g.current_tetramino.color
+	}
+	g.current_tetramino = g.next_tetramino
+	g.current_tetramino.x = 5
+	g.current_tetramino.y = 0
+	if g.current_tetramino.ShouldFreeze(g.board) {
+		g.game_over = true
+	}
+	g.next_tetramino = createTetramino()
+}
+
+func (g *Game) FastForward() {
+	for !g.current_tetramino.ShouldFreeze(g.board) {
+		g.current_tetramino.Move(0, 1)
+	}
+}
+
+func (g *Game) ClearLines() int {
+	cleared_lines := 0
+	for i := 19; i >= 0; i-- {
+		cleared := true
+		for j := 0; j < 10; j++ {
+			if !g.board[i][j].exists {
+				cleared = false
+			}
+		}
+
+		if cleared {
+			g.effectPlayer.Rewind()
+			g.effectPlayer.Play()
+			cleared_lines++
+			for j := i-1; j > 0; j-- {
+				for k := 0; k < 10; k++ {
+					g.board[j+1][k] = g.board[j][k]
+				}
+			}
+
+			for j := 0; j < 10; j++ {
+				g.board[0][j].exists = false
+			}
+			i++			
+		}
+	}
+
+	switch cleared_lines {
+	case 1:
+		return 100
+	case 2:
+		return 300
+	case 3:
+		return 500
+	case 4:
+		return 800
+	default:
+		return 0
+	}
+}
+
+
+func (g *Game) Update(screen *ebiten.Image) error {
+	if g.game_over { return nil }
+	
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		return fmt.Errorf("game is interrupted")
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+		if g.current_tetramino.CanMove(g.board, [2]int{-1, 0}) {
+			g.current_tetramino.Move(-1, 0)
+		}
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+		if g.current_tetramino.CanMove(g.board, [2]int{1, 0}) {
+			g.current_tetramino.Move(1, 0)
+		}
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
+		g.current_tetramino.Rotate()
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+		g.FastForward()
+	}
+
+	current_time := time.Now()
+	if current_time.Sub(g.delta_time) > SECOND/START_SPEED {
+		if g.current_tetramino.ShouldFreeze(g.board) {
+			g.NewTetramino()
+		}
+		g.current_tetramino.Move(0, 1)
+		g.delta_time = current_time
+	}
+
+	g.points += g.ClearLines()
+	fmt.Println(g.mainPlayer.IsPlaying())
+	if !g.mainPlayer.IsPlaying() {
+		g.mainPlayer.Rewind()
+		g.mainPlayer.Play()
+	}
+
+	if g.game_over { g.mainPlayer.Pause() }
+
+	return nil
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	screen.DrawImage(g.background, nil)
+	g.current_tetramino.Draw(screen)
+
+	for i := 0; i < 20; i++ {
+		for j := 0; j < 10; j++ {
+			if g.board[i][j].exists {
+				ebitenutil.DrawRect(screen,
+					float64(j * BLOCKSIZE),
+					float64(i * BLOCKSIZE),
+					BLOCKSIZE,
+					BLOCKSIZE,
+					Black)
+
+				ebitenutil.DrawRect(screen,
+					float64(j * BLOCKSIZE - 2),
+					float64(i * BLOCKSIZE - 2),
+					BLOCKSIZE - 4,
+					BLOCKSIZE - 4,
+					g.board[i][j].color)
+			}
+		}
+	}
+
+	g.next_tetramino.Draw(screen)
+	score_offset := 0
+	if g.points > 100000 {
+		score_offset = 5
+	} else if g.points > 10000 {
+		score_offset = 4
+	} else if g.points > 1000 {
+		score_offset = 3
+	} else if g.points > 100 {
+		score_offset = 2
+	}
+	text.Draw(screen, strconv.Itoa(g.points), regularFont, 650-score_offset*16, 170, Black)
+}
+
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	if outsideWidth < WIDTH {
+		outsideWidth = WIDTH
+	}
+	if outsideHeight < HEIGHT {
+		outsideHeight = HEIGHT
+	}
+	return outsideWidth, outsideHeight
+}
+
+func CreateGame() Game {
+	game := Game{
+		current_tetramino: createTetramino(),
+		next_tetramino: createTetramino(),
+		delta_time: time.Now(),
+		game_over: false,
+	}
+
+	game.current_tetramino.x = 5
+	game.current_tetramino.y = 0
+
+	for i := 0; i < 20; i++ {
+		for j := 0; i < 10; i++ {
+			game.board[i][j].exists = false
+			game.board[i][j].color = Red
+		}
+	}
+
+	image, _, err := ebitenutil.NewImageFromFile("assets/graphics/background.png", ebiten.FilterDefault)
+	if err != nil {
+		log.Fatal(err)
+	}
+	game.background = image
+	game.mainPlayer, game.effectPlayer = CreateAudioPlayer()
+	game.mainPlayer.Play()
+
+	//opts := &ebiten.DrawImageOptions{}
+	//opts.GeoM.Translate(300, 300)
+	
+	return game
+}
+
+func CreateAudioPlayer() (*audio.Player, *audio.Player) {
+	audioContext, err := audio.NewContext(44100)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := ebitenutil.OpenFile("assets/audio/soundtrack.wav")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	decodedSound, err := wav.Decode(audioContext, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	player, err := audio.NewPlayer(audioContext, decodedSound)
+
+	file2, err := ebitenutil.OpenFile("assets/audio/clear.wav")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	decodedSound2, err := wav.Decode(audioContext, file2)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	effectplayer, err := audio.NewPlayer(audioContext, decodedSound2)
+	return player, effectplayer
+}
+
+
+
+func main() {
+	rand.Seed(time.Now().UnixNano())
+	ebiten.SetWindowSize(WIDTH, HEIGHT)
+	ebiten.SetWindowTitle("Tetris")
+	game := CreateGame()
+	if err := ebiten.RunGame(&game); err != nil {
+		fmt.Println(err)
+	}
+}
