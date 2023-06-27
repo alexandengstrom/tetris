@@ -4,10 +4,8 @@ import (
 	"log"
 	"io/ioutil"
 	"github.com/golang/freetype/truetype"
-	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/audio/wav"
-	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"golang.org/x/image/font"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 )

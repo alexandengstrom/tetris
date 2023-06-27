@@ -5,17 +5,15 @@ import (
 	"image/color"
 	"time"
 	"math/rand"
-	"log"
-	"io/ioutil"
-	"strconv"
 
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/inpututil"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"github.com/hajimehoshi/ebiten/text"
-	"github.com/alexandengstrom/tetris/tetramino"
-	"github.com/alexandengstrom/tetris/game"
-	"github.com/alexandengstrom/tetris/utils"
+	//"github.com/hajimehoshi/ebiten/inpututil"
+	//"github.com/hajimehoshi/ebiten/ebitenutil"
+	//"github.com/hajimehoshi/ebiten/text"
+	//"github.com/alexandengstrom/tetris/tetramino"
+	//"github.com/alexandengstrom/tetris/game"
+	//"github.com/alexandengstrom/tetris/utils"
+	"golang.org/x/image/font"
 )
 
 const (

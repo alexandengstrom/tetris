@@ -1,9 +1,16 @@
 package main
 
 import (
+	"image/color"
+	"time"
 	"fmt"
+	"strconv"
+	"log"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/audio"
+	"github.com/hajimehoshi/ebiten/text"
 )
 
 type Box struct {
