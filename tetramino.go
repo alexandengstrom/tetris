@@ -122,14 +122,16 @@ func createTetramino() Tetramino {
 	case 1:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {1,0}, {2,0}},
-			color: LightBlue,
+			//color: LightBlue,
+			color: DelftBlue,
 			x: WAIT_X-1,
 			y: WAIT_Y,
 		}
 	case 2:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{0, 1}, {1,0}, {1,1}},
-			color: Yellow,
+			//color: Yellow,
+			color: Sapphire,
 			x: WAIT_X,
 			y: WAIT_Y,
 			offsetX: -30,
@@ -138,7 +140,8 @@ func createTetramino() Tetramino {
 	case 3:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {1,0}, {0,1}},
-			color: Cyan,
+			//color: Cyan,
+			color: UltraViolet,
 			x: WAIT_X,
 			y: WAIT_Y,
 			offsetX: -15,
@@ -147,7 +150,8 @@ func createTetramino() Tetramino {
 	case 4:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{0, -1}, {0,1}, {1,1}},
-			color: Orange,
+			//color: Orange,
+			color: PompAndPower,
 			x: WAIT_X,
 			y: WAIT_Y,
 			offsetX: -20,
@@ -156,7 +160,8 @@ func createTetramino() Tetramino {
 	case 5:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {0,1}, {1,1}},
-			color: Green,
+			//color: Green,
+			color: LightRed,
 			x: WAIT_X,
 			y: WAIT_Y,
 			offsetX: -10,
@@ -165,7 +170,8 @@ func createTetramino() Tetramino {
 	case 6:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{0, -1}, {-1,1}, {0,1}},
-			color: Blue,
+			//color: Blue,
+			color: BakerMillerPink,
 			x: WAIT_X,
 			y: WAIT_Y,
 			offsetX: -15,
@@ -174,7 +180,8 @@ func createTetramino() Tetramino {
 	case 7:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {0,-1}, {1,-1}},
-			color: Red,
+			//color: Red,
+			color: Plum,
 			x: WAIT_X,
 			y: WAIT_Y,
 		}

@@ -34,6 +34,13 @@ var (
 	Green = color.RGBA{50, 205, 50, 255}
 	Black = color.RGBA{0, 0, 0, 255}
 	regularFont font.Face
+	DelftBlue = color.RGBA{41, 60, 105, 255}
+	Sapphire = color.RGBA{43, 80, 170, 255}
+	UltraViolet = color.RGBA{96, 94, 163, 255}
+	PompAndPower = color.RGBA{149, 107, 156, 255}
+	LightRed = color.RGBA{255, 133, 141, 255}
+	BakerMillerPink = color.RGBA{255, 146, 185, 255}
+	Plum = color.RGBA{255, 159, 229, 255}
 )
 
 func main() {
