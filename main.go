@@ -19,7 +19,8 @@ const (
 	WAIT_Y = 8
 	FONT_PATH = "assets/fonts/font.ttf"
 	FONT_SIZE = 50
-	START_SPEED = 4
+	START_SPEED = 3
+	LEVEL_BOUNDARY = 800
 )
 
 var (

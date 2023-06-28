@@ -24,15 +24,16 @@ type Box struct {
 }
 
 type Game struct {
-	deltaTime time.Time
+	deltaTime        time.Time
 	currentTetramino Tetramino
-	nextTetramino Tetramino
-	board [20][10]Box
-	points int
-	game_over bool
-	background *ebiten.Image
-	audioMixer AudioMixer
-	playState int
+	nextTetramino    Tetramino
+	board            [20][10]Box
+	points           int
+	game_over        bool
+	background       *ebiten.Image
+	audioMixer       AudioMixer
+	playState        int
+	level            int
 }
 
 func (g *Game) GameOver() {
@@ -42,12 +43,6 @@ func (g *Game) GameOver() {
 }
 
 func (g *Game) NewTetramino() {
-	for i := 0; i < 4; i++ {
-		x := g.currentTetramino.x + g.currentTetramino.shape[i][0]
-		y := g.currentTetramino.y + g.currentTetramino.shape[i][1]
-		g.board[y][x].exists = true
-		g.board[y][x].color = g.currentTetramino.color
-	}
 	g.currentTetramino = g.nextTetramino
 	g.currentTetramino.x = 5
 	g.currentTetramino.y = 0
@@ -55,6 +50,15 @@ func (g *Game) NewTetramino() {
 		g.GameOver()
 	}
 	g.nextTetramino = createTetramino()
+}
+
+func (g *Game) FreezeTetramino() {
+	for i := 0; i < 4; i++ {
+		x := g.currentTetramino.x + g.currentTetramino.shape[i][0]
+		y := g.currentTetramino.y + g.currentTetramino.shape[i][1]
+		g.board[y][x].exists = true
+		g.board[y][x].color = g.currentTetramino.color
+	}
 }
 
 func (g *Game) FastForward() {
@@ -92,6 +96,13 @@ func (g *Game) ClearLines() int {
 	return CalculateScore(clearedLines)
 }
 
+func (g *Game) ManageLevels() {
+	if g.points / LEVEL_BOUNDARY + 1 > g.level {
+		fmt.Println("LEVEL UP")
+		g.level++
+	}
+}
+
 func (g *Game) ManageAudio() {
 	if !g.audioMixer.IsPlaying() {
 		g.audioMixer.Restart()
@@ -119,40 +130,51 @@ func (g *Game) ManageInput() error {
 	return nil
 }
 
+func (g *Game) UpdatePlaystate() {
+	g.ManageAudio()
+	g.ManageInput()
+
+	currentTime := time.Now()
+	if currentTime.Sub(g.deltaTime) > time.Duration(SECOND/(START_SPEED+g.level)) {
+		if g.currentTetramino.ShouldFreeze(g.board) {
+			g.FreezeTetramino()
+			g.NewTetramino()
+		}
+		g.currentTetramino.Move(0, 1)
+		g.deltaTime = currentTime
+	}
+
+	g.points += g.ClearLines()
+	g.ManageLevels()
+}
+
+func (g *Game) UpdateGameOverState() {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		x, y := ebiten.CursorPosition()
+		
+		if x > 5*BLOCKSIZE && x < 15*BLOCKSIZE && y > 8* BLOCKSIZE && y < 10*BLOCKSIZE {
+			g.playState = RESTART
+			g.points = 0
+		}
+	}
+}
+
 func (g *Game) Update(screen *ebiten.Image) error {
 	switch g.playState {
 	case PLAY:
-		g.ManageAudio()
-		g.ManageInput()
-
-		currentTime := time.Now()
-		if currentTime.Sub(g.deltaTime) > SECOND/START_SPEED {
-			if g.currentTetramino.ShouldFreeze(g.board) {
-				g.NewTetramino()
-			}
-			g.currentTetramino.Move(0, 1)
-			g.deltaTime = currentTime
-		}
-
-		g.points += g.ClearLines()
+		g.UpdatePlaystate()
 	case RESTART:
 		g.board = InitBoard()
 		g.audioMixer.Play()
 		g.playState = PLAY
 	case GAMEOVER:
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			x, y := ebiten.CursorPosition()
-			
-			if x > 5*BLOCKSIZE && x < 15*BLOCKSIZE && y > 8* BLOCKSIZE && y < 10*BLOCKSIZE {
-				g.playState = RESTART
-				g.points = 0
-			}
-		}
+		g.UpdateGameOverState()
 	}
 
 
 	return nil
 }
+
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.background, nil)
@@ -179,16 +201,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	g.nextTetramino.Draw(screen, true)
-	score_offset := 0
-	if g.points > 100000 {
-		score_offset = 5
-	} else if g.points > 10000 {
-		score_offset = 4
-	} else if g.points > 1000 {
-		score_offset = 3
-	} else if g.points > 100 {
-		score_offset = 2
-	}
+	score_offset := CalculateScoreOffset(g.points)
 	text.Draw(screen, strconv.Itoa(g.points), regularFont, 650-score_offset*16, 170, Black)
 
 	if g.playState == GAMEOVER {
@@ -229,6 +242,7 @@ func CreateGame() Game {
 		board: InitBoard(),
 		game_over: false,
 		playState: PLAY,
+		level: 1,
 	}
 
 	game.currentTetramino.x = 5
@@ -258,6 +272,20 @@ func CalculateScore(clearedLines int) int {
 	default:
 		return 0
 	}	
+}
+
+func CalculateScoreOffset(score int) int {
+	if score > 100000 {
+		return 5
+	} else if score > 10000 {
+		return 4
+	} else if score > 1000 {
+		return 3
+	} else if score > 100 {
+		return 2
+	}
+
+	return 0
 }
 
 func InitBoard() [20][10]Box {
