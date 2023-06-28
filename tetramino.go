@@ -16,37 +16,25 @@ type Tetramino struct {
 	color color.RGBA
 }
 
-func (t *Tetramino) Draw(screen *ebiten.Image) {
-	for i := 0; i < 4; i++ {
-		ebitenutil.DrawRect(screen,
-			float64(t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE),
-			float64(t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE),
-			BLOCKSIZE,
-			BLOCKSIZE,
-			Black,
-		)
-		ebitenutil.DrawRect(screen,
-			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE)-2),
-			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE))-2,
-			BLOCKSIZE-4,
-			BLOCKSIZE-4,
-			t.color,
-		)
+func (t *Tetramino) Draw(screen *ebiten.Image, offset bool) {
+	var offsetX, offsetY int
+	
+	if offset {
+		offsetX = t.offsetX
+		offsetY = t.offsetY
 	}
-}
-
-func (t *Tetramino) DrawQueue(screen *ebiten.Image) {
+	
 	for i := 0; i < 4; i++ {
 		ebitenutil.DrawRect(screen,
-			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE) + t.offsetX),
-			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE) + t.offsetY),
+			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE) + offsetX),
+			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE) + offsetY),
 			BLOCKSIZE,
 			BLOCKSIZE,
 			Black,
 		)
 		ebitenutil.DrawRect(screen,
-			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE)-2 + t.offsetY),
-			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE)-2 + t.offsetY),
+			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE)-2 + offsetY),
+			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE)-2 + offsetY),
 			BLOCKSIZE-4,
 			BLOCKSIZE-4,
 			t.color,

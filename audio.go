@@ -5,23 +5,21 @@ import(
 	"github.com/hajimehoshi/ebiten/audio/wav"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"log"
-	"fmt"
 )
 
 type AudioMixer struct {
 	mainTheme *audio.Player
 	lineClear *audio.Player
+	gameOver *audio.Player
 }
 
 func (mixer *AudioMixer) Play() {
 	mixer.mainTheme.Play()
-	fmt.Println("Playing")
 }
 
 func (mixer *AudioMixer) Restart() {
 	mixer.mainTheme.Rewind()
 	mixer.mainTheme.Play()
-	fmt.Println("Restarting")
 }
 
 func (mixer *AudioMixer) IsPlaying() bool {
@@ -31,12 +29,16 @@ func (mixer *AudioMixer) IsPlaying() bool {
 func (mixer *AudioMixer) Stop() {
 	mixer.mainTheme.Rewind()
 	mixer.mainTheme.Pause()
-	fmt.Println("Stopping")
 }
 
 func (mixer *AudioMixer) ClearLine() {
 	mixer.lineClear.Rewind()
 	mixer.lineClear.Play()
+}
+
+func (mixer *AudioMixer) GameOver() {
+	mixer.gameOver.Rewind()
+	mixer.gameOver.Play()
 }
 
 func CreateAudioPlayer() AudioMixer {
@@ -67,10 +69,29 @@ func CreateAudioPlayer() AudioMixer {
 		log.Fatal(err)
 	}
 
-	effectplayer, err := audio.NewPlayer(audioContext, decodedSound2)
+	effectPlayer, err := audio.NewPlayer(audioContext, decodedSound2)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file3, err := ebitenutil.OpenFile("assets/audio/gameover.wav")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	decodedSound3, err := wav.Decode(audioContext, file3)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gameOverPlayer, err := audio.NewPlayer(audioContext, decodedSound3)
+	if err != nil {
+		log.Fatal(err)
+	}
 	
 	return AudioMixer{
 		mainTheme: player,
-		lineClear: effectplayer,
+		lineClear: effectPlayer,
+		gameOver: gameOverPlayer,
 	}
 }

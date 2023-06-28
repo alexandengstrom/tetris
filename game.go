@@ -35,6 +35,12 @@ type Game struct {
 	playState int
 }
 
+func (g *Game) GameOver() {
+	g.playState = GAMEOVER
+	g.audioMixer.Stop()
+	g.audioMixer.GameOver()
+}
+
 func (g *Game) NewTetramino() {
 	for i := 0; i < 4; i++ {
 		x := g.currentTetramino.x + g.currentTetramino.shape[i][0]
@@ -46,8 +52,7 @@ func (g *Game) NewTetramino() {
 	g.currentTetramino.x = 5
 	g.currentTetramino.y = 0
 	if g.currentTetramino.ShouldFreeze(g.board) {
-		g.playState = GAMEOVER
-		g.audioMixer.Stop()
+		g.GameOver()
 	}
 	g.nextTetramino = createTetramino()
 }
@@ -151,7 +156,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.background, nil)
-	g.currentTetramino.Draw(screen)
+	g.currentTetramino.Draw(screen, false)
 
 	for i := 0; i < 20; i++ {
 		for j := 0; j < 10; j++ {
@@ -173,7 +178,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	g.nextTetramino.DrawQueue(screen)
+	g.nextTetramino.Draw(screen, true)
 	score_offset := 0
 	if g.points > 100000 {
 		score_offset = 5
@@ -195,14 +200,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			Black)
 
 		ebitenutil.DrawRect(screen,
-			float64(5 * BLOCKSIZE)+2,
-			float64(5 * BLOCKSIZE)+2,
-			BLOCKSIZE*10-4,
-			BLOCKSIZE*5-4,
-			Orange)
+			float64(5 * BLOCKSIZE)+5,
+			float64(5 * BLOCKSIZE)+5,
+			BLOCKSIZE*10-10,
+			BLOCKSIZE*5-10,
+			DelftBlue)
 
-		text.Draw(screen, "GAME OVER", regularFont, 6*BLOCKSIZE, 7*BLOCKSIZE, Black)
-		text.Draw(screen, "PLAY AGAIN", regularFont, 6*BLOCKSIZE, 9*BLOCKSIZE, Black)
+		text.Draw(screen, "GAME OVER", regularFont, 6*BLOCKSIZE, 7*BLOCKSIZE, Plum)
+		text.Draw(screen, "PLAY AGAIN", regularFont, 6*BLOCKSIZE, 9*BLOCKSIZE, Plum)
 	}
 }
 
