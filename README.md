@@ -9,7 +9,12 @@ This project is a Tetris game implemented in Go using the Ebiten library. It was
 2. __Navigate to the project directory__:
       ```shell
    cd tetris
+      ```    
+3. __Download the project dependencies using the go.mod file__:
+      ```shell
+   go mod download
       ```
+
 3. __Build the project__:
      ```shell
    ./build.sh
