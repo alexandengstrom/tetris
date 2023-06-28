@@ -9,7 +9,6 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
-	//"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/text"
 )
 
@@ -48,6 +47,7 @@ func (g *Game) NewTetramino() {
 	g.current_tetramino.y = 0
 	if g.current_tetramino.ShouldFreeze(g.board) {
 		g.playState = GAMEOVER
+		g.audioMixer.Stop()
 	}
 	g.next_tetramino = createTetramino()
 }
@@ -88,31 +88,37 @@ func (g *Game) ClearLines() int {
 }
 
 func (g *Game) ManageAudio() {
-	if g.game_over {
-		g.audioMixer.Stop()
-	} else if !g.audioMixer.IsPlaying() {
+	if !g.audioMixer.IsPlaying() {
 		g.audioMixer.Restart()
 	}
+}
+
+func (g *Game) ManageInput() error {
+	
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		return fmt.Errorf("game is interrupted")
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+		if g.current_tetramino.CanMove(g.board, [2]int{-1, 0}) {
+			g.current_tetramino.Move(-1, 0)
+		}
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+		if g.current_tetramino.CanMove(g.board, [2]int{1, 0}) {
+			g.current_tetramino.Move(1, 0)
+		}
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
+		g.current_tetramino.Rotate()
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+		g.FastForward()
+	}
+	
+	return nil
 }
 
 func (g *Game) Update(screen *ebiten.Image) error {
 	switch g.playState {
 	case PLAY:
-		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-			return fmt.Errorf("game is interrupted")
-		} else if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
-			if g.current_tetramino.CanMove(g.board, [2]int{-1, 0}) {
-				g.current_tetramino.Move(-1, 0)
-			}
-		} else if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
-			if g.current_tetramino.CanMove(g.board, [2]int{1, 0}) {
-				g.current_tetramino.Move(1, 0)
-			}
-		} else if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
-			g.current_tetramino.Rotate()
-		} else if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
-			g.FastForward()
-		}
+		g.ManageAudio()
+		g.ManageInput()
 
 		current_time := time.Now()
 		if current_time.Sub(g.delta_time) > SECOND/START_SPEED {
@@ -124,16 +130,13 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		}
 
 		g.points += g.ClearLines()
-		g.ManageAudio()
 	case RESTART:
 		g.board = InitBoard()
+		g.audioMixer.Play()
 		g.playState = PLAY
 	case GAMEOVER:
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
-			
-			
-			fmt.Println(x, y)
 			
 			if x > 5*BLOCKSIZE && x < 15*BLOCKSIZE && y > 8* BLOCKSIZE && y < 10*BLOCKSIZE {
 				g.playState = RESTART

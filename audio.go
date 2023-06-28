@@ -5,6 +5,7 @@ import(
 	"github.com/hajimehoshi/ebiten/audio/wav"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"log"
+	"fmt"
 )
 
 type AudioMixer struct {
@@ -14,11 +15,13 @@ type AudioMixer struct {
 
 func (mixer *AudioMixer) Play() {
 	mixer.mainTheme.Play()
+	fmt.Println("Playing")
 }
 
 func (mixer *AudioMixer) Restart() {
 	mixer.mainTheme.Rewind()
 	mixer.mainTheme.Play()
+	fmt.Println("Restarting")
 }
 
 func (mixer *AudioMixer) IsPlaying() bool {
@@ -26,8 +29,9 @@ func (mixer *AudioMixer) IsPlaying() bool {
 }
 
 func (mixer *AudioMixer) Stop() {
-	mixer.mainTheme.Pause()
 	mixer.mainTheme.Rewind()
+	mixer.mainTheme.Pause()
+	fmt.Println("Stopping")
 }
 
 func (mixer *AudioMixer) ClearLine() {
