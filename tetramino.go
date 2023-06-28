@@ -11,6 +11,8 @@ type Tetramino struct {
 	shape [4][2]int
 	x int
 	y int
+	offsetX int
+	offsetY int
 	color color.RGBA
 }
 
@@ -26,6 +28,25 @@ func (t *Tetramino) Draw(screen *ebiten.Image) {
 		ebitenutil.DrawRect(screen,
 			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE)-2),
 			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE))-2,
+			BLOCKSIZE-4,
+			BLOCKSIZE-4,
+			t.color,
+		)
+	}
+}
+
+func (t *Tetramino) DrawQueue(screen *ebiten.Image) {
+	for i := 0; i < 4; i++ {
+		ebitenutil.DrawRect(screen,
+			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE) + t.offsetX),
+			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE) + t.offsetY),
+			BLOCKSIZE,
+			BLOCKSIZE,
+			Black,
+		)
+		ebitenutil.DrawRect(screen,
+			float64((t.x * BLOCKSIZE + t.shape[i][0] * BLOCKSIZE)-2 + t.offsetY),
+			float64((t.y * BLOCKSIZE + t.shape[i][1] * BLOCKSIZE)-2 + t.offsetY),
 			BLOCKSIZE-4,
 			BLOCKSIZE-4,
 			t.color,
@@ -111,6 +132,8 @@ func createTetramino() Tetramino {
 			color: Yellow,
 			x: WAIT_X,
 			y: WAIT_Y,
+			offsetX: -30,
+			offsetY: -30,
 		}
 	case 3:
 		return Tetramino{
@@ -118,6 +141,8 @@ func createTetramino() Tetramino {
 			color: Cyan,
 			x: WAIT_X,
 			y: WAIT_Y,
+			offsetX: -15,
+			offsetY: -15,
 		}
 	case 4:
 		return Tetramino{
@@ -125,6 +150,8 @@ func createTetramino() Tetramino {
 			color: Orange,
 			x: WAIT_X,
 			y: WAIT_Y,
+			offsetX: -20,
+			offsetY: -20,
 		}
 	case 5:
 		return Tetramino{
@@ -132,13 +159,17 @@ func createTetramino() Tetramino {
 			color: Green,
 			x: WAIT_X,
 			y: WAIT_Y,
+			offsetX: -10,
+			offsetY: -10,
 		}
 	case 6:
 		return Tetramino{
-			shape: [4][2]int{{0,0},{0, 1}, {0,-1}, {-1,-1}},
+			shape: [4][2]int{{0,0},{0, -1}, {-1,1}, {0,1}},
 			color: Blue,
 			x: WAIT_X,
 			y: WAIT_Y,
+			offsetX: -15,
+			offsetY: -15,
 		}
 	case 7:
 		return Tetramino{
