@@ -36,4 +36,5 @@ This project is a Tetris game implemented in Go using the Ebiten library. It was
   
   ##  Pictures
 
-  ![Screenshot from 2023-06-28 12-17-09](https://github.com/alexandengstrom/tetris/assets/123507241/21cf9183-acb6-434d-b878-ca0586779e9f)
+![Screenshot from 2023-06-29 10-03-23](https://github.com/alexandengstrom/tetris/assets/123507241/2f2605b0-1488-4fea-a904-6ab4c5292f27)
+
