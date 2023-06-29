@@ -55,6 +55,10 @@ func (t *Tetramino) Rotate() {
 		t.shape[i][1] = new_y
 	}
 
+	t.KeepInBounds()
+}
+
+func (t *Tetramino) KeepInBounds() {
 	out_of_bounds := 0
 	for i := 0; i < 4; i++ {
 		if t.x + t.shape[i][0] > 9 && t.x + t.shape[i][0] > out_of_bounds {
@@ -66,14 +70,14 @@ func (t *Tetramino) Rotate() {
 
 	if out_of_bounds != 0 {
 		t.x -= out_of_bounds
-	}
+	}	
 }
 
 func (t *Tetramino) CanRotate(board [20][10]Box) bool {
 	for i := 1; i < 4; i++ {
 		new_x := t.shape[i][1] * -1
 		new_y := t.shape[i][0]
-		if board[t.y + new_y][t.x + new_x].exists {
+		if board[t.y + new_y][t.x + new_x + 1].exists {
 			return false
 		}
 	}
@@ -110,7 +114,6 @@ func createTetramino() Tetramino {
 	case 1:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {1,0}, {2,0}},
-			//color: LightBlue,
 			color: DelftBlue,
 			x: WAIT_X-1,
 			y: WAIT_Y,
@@ -118,7 +121,6 @@ func createTetramino() Tetramino {
 	case 2:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{0, 1}, {1,0}, {1,1}},
-			//color: Yellow,
 			color: Sapphire,
 			x: WAIT_X,
 			y: WAIT_Y,
@@ -128,7 +130,6 @@ func createTetramino() Tetramino {
 	case 3:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {1,0}, {0,1}},
-			//color: Cyan,
 			color: UltraViolet,
 			x: WAIT_X,
 			y: WAIT_Y,
@@ -138,7 +139,6 @@ func createTetramino() Tetramino {
 	case 4:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{0, -1}, {0,1}, {1,1}},
-			//color: Orange,
 			color: PompAndPower,
 			x: WAIT_X,
 			y: WAIT_Y,
@@ -148,7 +148,6 @@ func createTetramino() Tetramino {
 	case 5:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {0,1}, {1,1}},
-			//color: Green,
 			color: LightRed,
 			x: WAIT_X,
 			y: WAIT_Y,
@@ -158,7 +157,6 @@ func createTetramino() Tetramino {
 	case 6:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{0, -1}, {-1,1}, {0,1}},
-			//color: Blue,
 			color: BakerMillerPink,
 			x: WAIT_X,
 			y: WAIT_Y,
@@ -168,7 +166,6 @@ func createTetramino() Tetramino {
 	case 7:
 		return Tetramino{
 			shape: [4][2]int{{0,0},{-1, 0}, {0,-1}, {1,-1}},
-			//color: Red,
 			color: Plum,
 			x: WAIT_X,
 			y: WAIT_Y,

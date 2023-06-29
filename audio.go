@@ -11,6 +11,7 @@ type AudioMixer struct {
 	mainTheme *audio.Player
 	lineClear *audio.Player
 	gameOver *audio.Player
+	levelUp *audio.Player
 }
 
 func (mixer *AudioMixer) Play() {
@@ -39,6 +40,11 @@ func (mixer *AudioMixer) ClearLine() {
 func (mixer *AudioMixer) GameOver() {
 	mixer.gameOver.Rewind()
 	mixer.gameOver.Play()
+}
+
+func (mixer *AudioMixer) LevelUp() {
+	mixer.levelUp.Rewind()
+	mixer.levelUp.Play()
 }
 
 func CreateAudioPlayer() AudioMixer {
@@ -88,10 +94,26 @@ func CreateAudioPlayer() AudioMixer {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	file4, err := ebitenutil.OpenFile("assets/audio/levelup.wav")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	decodedSound4, err := wav.Decode(audioContext, file4)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	levelUpPlayer, err := audio.NewPlayer(audioContext, decodedSound4)
+	if err != nil {
+		log.Fatal(err)
+	}
 	
 	return AudioMixer{
 		mainTheme: player,
 		lineClear: effectPlayer,
 		gameOver: gameOverPlayer,
+		levelUp: levelUpPlayer,
 	}
 }

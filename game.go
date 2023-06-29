@@ -46,9 +46,11 @@ func (g *Game) NewTetramino() {
 	g.currentTetramino = g.nextTetramino
 	g.currentTetramino.x = 5
 	g.currentTetramino.y = 0
+	
 	if g.currentTetramino.ShouldFreeze(g.board) {
 		g.GameOver()
 	}
+	
 	g.nextTetramino = createTetramino()
 }
 
@@ -65,6 +67,8 @@ func (g *Game) FastForward() {
 	for !g.currentTetramino.ShouldFreeze(g.board) {
 		g.currentTetramino.Move(0, 1)
 	}
+	
+	g.FreezeTetramino()
 }
 
 func (g *Game) ClearLines() int {
@@ -98,7 +102,7 @@ func (g *Game) ClearLines() int {
 
 func (g *Game) ManageLevels() {
 	if g.points / LEVEL_BOUNDARY + 1 > g.level {
-		fmt.Println("LEVEL UP")
+		g.audioMixer.LevelUp()
 		g.level++
 	}
 }
@@ -135,7 +139,7 @@ func (g *Game) UpdatePlaystate() {
 	g.ManageInput()
 
 	currentTime := time.Now()
-	if currentTime.Sub(g.deltaTime) > time.Duration(SECOND/(START_SPEED+g.level)) {
+	if currentTime.Sub(g.deltaTime) > time.Duration(SECOND/(START_SPEED + g.level)) {
 		if g.currentTetramino.ShouldFreeze(g.board) {
 			g.FreezeTetramino()
 			g.NewTetramino()
@@ -167,6 +171,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		g.board = InitBoard()
 		g.audioMixer.Play()
 		g.playState = PLAY
+		g.level = 1
 	case GAMEOVER:
 		g.UpdateGameOverState()
 	}
@@ -179,7 +184,17 @@ func (g *Game) Update(screen *ebiten.Image) error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.background, nil)
 	g.currentTetramino.Draw(screen, false)
+	g.DrawBoard(screen)
+	g.nextTetramino.Draw(screen, true)
+	score_offset := CalculateScoreOffset(g.points)
+	text.Draw(screen, strconv.Itoa(g.points), regularFont, 650-score_offset*16, 170, Black)
 
+	if g.playState == GAMEOVER {
+		g.DrawGameOverBox(screen)
+	}
+}
+
+func (g *Game) DrawBoard(screen *ebiten.Image) {
 	for i := 0; i < 20; i++ {
 		for j := 0; j < 10; j++ {
 			if g.board[i][j].exists {
@@ -198,30 +213,26 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					g.board[i][j].color)
 			}
 		}
-	}
+	}	
+}
 
-	g.nextTetramino.Draw(screen, true)
-	score_offset := CalculateScoreOffset(g.points)
-	text.Draw(screen, strconv.Itoa(g.points), regularFont, 650-score_offset*16, 170, Black)
+func (g *Game) DrawGameOverBox(screen *ebiten.Image) {
+	ebitenutil.DrawRect(screen,
+		float64(5 * BLOCKSIZE),
+		float64(5 * BLOCKSIZE),
+		BLOCKSIZE*10,
+		BLOCKSIZE*5,
+		Black)
 
-	if g.playState == GAMEOVER {
-		ebitenutil.DrawRect(screen,
-			float64(5 * BLOCKSIZE),
-			float64(5 * BLOCKSIZE),
-			BLOCKSIZE*10,
-			BLOCKSIZE*5,
-			Black)
+	ebitenutil.DrawRect(screen,
+		float64(5 * BLOCKSIZE)+5,
+		float64(5 * BLOCKSIZE)+5,
+		BLOCKSIZE*10-10,
+		BLOCKSIZE*5-10,
+		DelftBlue)
 
-		ebitenutil.DrawRect(screen,
-			float64(5 * BLOCKSIZE)+5,
-			float64(5 * BLOCKSIZE)+5,
-			BLOCKSIZE*10-10,
-			BLOCKSIZE*5-10,
-			DelftBlue)
-
-		text.Draw(screen, "GAME OVER", regularFont, 6*BLOCKSIZE, 7*BLOCKSIZE, Plum)
-		text.Draw(screen, "PLAY AGAIN", regularFont, 6*BLOCKSIZE, 9*BLOCKSIZE, Plum)
-	}
+	text.Draw(screen, "GAME OVER", regularFont, 6*BLOCKSIZE, 7*BLOCKSIZE, Plum)
+	text.Draw(screen, "PLAY AGAIN", regularFont, 6*BLOCKSIZE, 9*BLOCKSIZE, Plum)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
