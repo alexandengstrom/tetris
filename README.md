@@ -1,5 +1,5 @@
 # Tetris
-This project is a Tetris game implemented in Go using the Ebiten library. It was developed as a learning project to explore the Go programming language.
+This project is my first Go project, which is a Tetris game implemented using the Ebiten library. It was developed as a learning project to explore the Go programming language and gain hands-on experience with its concepts and features.
 
 ## Installation
 1. __Clone the repository__:
